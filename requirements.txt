@@ -1,0 +1,8 @@
+beautifulsoup4==4.10.0
+lxml>=4.9.1  # Versão mais recente para compatibilidade com novas ferramentas de compilação
+tkintertable  # Tkinter é parte da biblioteca padrão, mas outras dependências gráficas podem precisar.
+# As seguintes bibliotecas são da biblioteca padrão do Python e não precisam ser instaladas:
+# logging
+# threading
+# concurrent.futures
+requests  # Necessário para eventuais requisições HTTP, dependendo das necessidades do script.
