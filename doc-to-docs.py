@@ -16,7 +16,7 @@ import logging
 import threading
 
 # Configuração do módulo de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='migration.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Caminhos base para a estrutura de documentos do Docusaurus e os arquivos a serem migrados
 BASE_DOCS_PATH = ""
@@ -41,6 +41,14 @@ def run_gui():
     def select_dest_dir():
         dest_dir.set(filedialog.askdirectory(title="Selecione o diretório onde gerar a nova estrutura de documentação"))
 
+    # Função que mostra o botão "Concluído"
+    def mostrar_botao_concluido():
+        botao_concluido.pack(pady=20) # type: ignore
+
+    # Função que fecha a janela ao clicar no botão "Concluído"
+    def concluido():
+        root.quit()
+
     def start_migration():
         if not zip_path.get():
             messagebox.showerror("Erro", "Nenhum arquivo ZIP selecionado.")
@@ -49,7 +57,8 @@ def run_gui():
             messagebox.showerror("Erro", "Nenhum diretório selecionado.")
             return
 
-        threading.Thread(target=main, args=(zip_path.get(), dest_dir.get(), progress_bar)).start()
+        threading.Thread(target=lambda: main(zip_path.get(), dest_dir.get(), progress_bar)).start()
+        mostrar_botao_concluido()
 
     zip_path = tk.StringVar()
     dest_dir = tk.StringVar()
@@ -68,6 +77,7 @@ def run_gui():
     progress_bar.pack(pady=20)
 
     root.mainloop()
+
 
 ###############################
 # Cria Estrutura de Diretórios
@@ -171,10 +181,24 @@ def sanitize_markdown_files(base_docs_path, progress_callback=None, total_steps=
                 progress_callback(current_step, total_steps)
 
 def process_md_file(md_file_path):
-    content = read_file(md_file_path)
-    sanitized_content = sanitize_content(content)
-    write_file(md_file_path, sanitized_content)
-    logging.info(f"Sanitizado: {md_file_path}")
+    try:
+        with open(md_file_path, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        # Remover cabeçalho de metadados e extrair o título
+        title_match = re.search(r"## Metadata_Start.*?## title: (.*?)\n.*?## Metadata_End", content, re.DOTALL)
+        if title_match:
+            title = title_match.group(1)
+            content = re.sub(r"## Metadata_Start.*?## Metadata_End", "", content, flags=re.DOTALL).strip()
+            content = f"# {title}\n\n" + content
+
+        with open(md_file_path, 'w', encoding='utf-8') as file:
+            file.write(content)
+
+        logging.info(f"Processado: {md_file_path}")
+    except Exception as e:
+        logging.error(f"Erro ao processar o arquivo Markdown '{md_file_path}': {e}")
+
 
 ###############################
 # Funções Utilitárias
@@ -285,7 +309,7 @@ def main(zip_path, dest_dir, progress_bar=None):
         logging.error("Não foi possível determinar a pasta da versão automaticamente.")
         messagebox.showerror("Erro", "Não foi possível determinar a pasta da versão automaticamente.")
         return
-
+        
     # Definir caminhos após extração
     global BASE_DOCS_PATH, SOURCE_FILES_PATH, CATEGORIES_JSON_PATH, MEDIA_PATH
     BASE_DOCS_PATH = os.path.join(dest_dir, "docusaurus", "docs")
