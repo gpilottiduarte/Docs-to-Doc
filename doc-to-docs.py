@@ -14,6 +14,7 @@ from bs4 import BeautifulSoup, Comment
 from concurrent.futures import ThreadPoolExecutor
 import logging
 import threading
+import markdownify as md
 
 # Configuração do módulo de logging
 logging.basicConfig(filename='migration.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -40,10 +41,6 @@ def run_gui():
 
     def select_dest_dir():
         dest_dir.set(filedialog.askdirectory(title="Selecione o diretório onde gerar a nova estrutura de documentação"))
-
-    # Função que mostra o botão "Concluído"
-    def mostrar_botao_concluido():
-        botao_concluido.pack(pady=20) # type: ignore
 
     # Função que fecha a janela ao clicar no botão "Concluído"
     def concluido():
@@ -153,18 +150,29 @@ def convert_html_to_markdown(base_docs_path, progress_callback=None, total_steps
                 progress_callback(current_step, total_steps)
 
 def process_html_file(html_file_path):
-    md_file_path = get_md_file_path(html_file_path)
-    content = read_file(html_file_path)
+    try:
+        md_file_path = get_md_file_path(html_file_path)
+        
+        # Ler o conteúdo do arquivo HTML
+        content = read_file(html_file_path)
+        
+        # Extrair o título e remover metadados
+        title = extract_title(content)
+        cleaned_content = remove_metadata(content)
+
+        # Converter HTML para Markdown
+        markdown_content = html_to_markdown(cleaned_content, title)
+
+        # Escrever o conteúdo convertido no arquivo Markdown
+        write_file(md_file_path, markdown_content)
+        logging.info(f"Convertido: {html_file_path} -> {md_file_path}")
+
+        # Remover o arquivo HTML original
+        remove_file(html_file_path)
+        logging.info(f"Removido arquivo HTML: {html_file_path}")
     
-    title = extract_title(content)
-    content = remove_metadata(content)
-    markdown_content = html_to_markdown(content, title)
-    
-    write_file(md_file_path, markdown_content)
-    logging.info(f"Convertido: {html_file_path} -> {md_file_path}")
-    
-    remove_file(html_file_path)
-    logging.info(f"Removido arquivo HTML: {html_file_path}")
+    except Exception as e:
+        logging.error(f"Erro ao processar o arquivo HTML '{html_file_path}': {e}")
 
 ###############################
 # Sanitizar Markdown com Threads
@@ -180,25 +188,25 @@ def sanitize_markdown_files(base_docs_path, progress_callback=None, total_steps=
             if progress_callback:
                 progress_callback(current_step, total_steps)
 
+
 def process_md_file(md_file_path):
     try:
         with open(md_file_path, 'r', encoding='utf-8') as file:
             content = file.read()
-
         # Remover cabeçalho de metadados e extrair o título
         title_match = re.search(r"## Metadata_Start.*?## title: (.*?)\n.*?## Metadata_End", content, re.DOTALL)
         if title_match:
             title = title_match.group(1)
             content = re.sub(r"## Metadata_Start.*?## Metadata_End", "", content, flags=re.DOTALL).strip()
             content = f"# {title}\n\n" + content
-
+        # Converter HTML para Markdown usando markdownify
+        markdown_content = md(content)
+        # Escrever o conteúdo convertido no arquivo Markdown
         with open(md_file_path, 'w', encoding='utf-8') as file:
-            file.write(content)
-
+            file.write(markdown_content)
         logging.info(f"Processado: {md_file_path}")
     except Exception as e:
         logging.error(f"Erro ao processar o arquivo Markdown '{md_file_path}': {e}")
-
 
 ###############################
 # Funções Utilitárias

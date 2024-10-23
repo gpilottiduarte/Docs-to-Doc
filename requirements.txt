@@ -6,3 +6,4 @@ tkintertable  # Tkinter é parte da biblioteca padrão, mas outras dependências
 # threading
 # concurrent.futures
 requests  # Necessário para eventuais requisições HTTP, dependendo das necessidades do script.
+markdownify
