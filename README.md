@@ -152,9 +152,15 @@ If you encounter any problems or have suggestions, please open an issue in the r
 
 ### Migration from Document360 to Docusaurus
 
+![](https://github.com/mtgr18977/Docs-to-Doc/blob/main/mapping_json.png)
+
 ### Cleaning Markdown Files
 
+![](https://github.com/mtgr18977/Docs-to-Doc/blob/main/limpa_md.png)
+
 ### HTML to Markdown Conversion
+
+![](https://github.com/mtgr18977/Docs-to-Doc/blob/main/convert_hml.png)
 
 ---
 
