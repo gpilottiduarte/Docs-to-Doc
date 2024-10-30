@@ -13,7 +13,6 @@ This repository contains three useful scripts for documentation migration and co
     - [Prerequisites](#prerequisites)
     - [Running the Executables](#running-the-executables)
     - [Running the Python Scripts](#running-the-python-scripts)
-- [License](#license)
 - [Acknowledgments](#acknowledgments)
 - [Contact](#contact)
 - [Contributions](#contributions)
